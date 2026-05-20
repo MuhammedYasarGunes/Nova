@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# MacOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Database / Vector stores
+database/
+*.sqlite
+*.db
+chromadb/
+
+# Model cache
+.models/
+.cache/
+huggingface/
+
+# Ollama (local models cache if any exported)
+ollama_models/
+
+# Testing
+.pytest_cache/
+
+# Misc
+*.tmp
+*.bak
