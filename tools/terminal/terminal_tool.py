@@ -12,6 +12,14 @@ class TerminalTool(BaseTool):
 
     def run(self, command):
 
+        if not command:
+            return {"stdout": "", "stderr": "Çalıştırılacak komut yok"}
+
+        # Komutu LLM seçiyor; çalıştırmadan önce kullanıcı onayı şart.
+        answer = input(f"\nÇalıştırılacak komut: {command}\nOnaylıyor musun? [e/H] ")
+        if answer.strip().lower() not in ("e", "evet", "y", "yes"):
+            return {"stdout": "", "stderr": "Kullanıcı komutu onaylamadı"}
+
         result = subprocess.run(
             command,
             shell=True,

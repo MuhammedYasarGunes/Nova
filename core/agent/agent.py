@@ -20,7 +20,10 @@ class Agent:
 
         tool = plan.get("tool")
 
-        if tool and tool != "none":
+        # Planner "memory" de seçebiliyor ama TOOLS içinde yalnızca kayıtlı
+        # araçlar var; hafıza zaten yukarıda bağlama eklendi. Kayıtlı olmayan
+        # bir araç seçilirse KeyError yerine normal sohbete düşülür.
+        if tool in TOOLS:
 
             result = TOOLS[tool].run(plan.get("input"))
 
