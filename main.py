@@ -2,7 +2,7 @@ from core.agent.agent import Agent
 
 agent = Agent()
 
-print("\nHermes Core Başlatıldı")
+print("\nNova başlatıldı")
 print("Çıkmak için: exit\n")
 
 while True:

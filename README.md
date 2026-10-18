@@ -1,150 +1,86 @@
-# Hermes Core — Yerel AI Agent Sistemi
-Hermes Core, tamamen yerel çalışan, tool kullanabilen ve hafıza tutabilen AI agent altyapısıdır.
-Bu proje:
-- Ollama üzerinden yerel LLM çalıştırır
-- Terminal ve sistem araçlarını kullanabilir
-- Semantic memory (vektör hafıza) içerir
-- LLM tabanlı tool routing yapar
-- Genişletilebilir agent mimarisi sunar
----
-# 🚀 Özellikler
-## 🧠 Yerel Yapay Zeka
-- Ollama üzerinden Qwen modeli çalıştırılır
-- API bağımlılığı yoktur
-- Tamamen offline kullanılabilir
-## 🔧 Tool Sistemi
-- Terminal komutları çalıştırma
-- Genişletilebilir tool mimarisi
-- LLM tabanlı tool seçimi (JSON format)
-## 🧠 Hafıza Sistemi
-- ChromaDB tabanlı vektör hafıza
-- Semantic search desteği
-- Kullanıcı geçmişini hatırlama
-## 💬 Chat Agent
-- Sürekli sohbet döngüsü
-- Bağlam (context) desteği
-- Hafızadan bilgi çekme
----
-# 🏗 Sistem Mimarisi
-```text id="r2"
-Kullanıcı Girdisi
+# Nova · Yerel AI Agent
+
+Tamamen yerelde çalışan, araç kullanabilen ve konuşmaları hatırlayan deneysel bir AI agent. Ollama üzerinden yerel bir LLM (Qwen 2.5) kullanır; dışarıya API çağrısı yapmaz.
+
+> **English:** An experimental local AI agent. It routes each request with an LLM (Ollama + Qwen 2.5) to a tool or to plain chat, runs tools such as a terminal command runner (with user confirmation), and keeps a semantic memory in ChromaDB using sentence-transformers embeddings.
+
+## Nasıl çalışır
+
+```text
+Kullanıcı girdisi
       ↓
-Planner (LLM Router)
+Hafızaya kaydet + benzer eski konuşmaları getir (ChromaDB)
       ↓
-Tool Seçimi (JSON)
+Planner: LLM, isteğe uygun aracı JSON olarak seçer
       ↓
-Tool Çalıştırma
+Araç seçildiyse çalıştır (terminal komutları kullanıcı onayıyla)
       ↓
-Hafıza Sorgulama
-      ↓
-LLM Yanıt Üretimi
+LLM, araç çıktısını ve hafızayı kullanarak cevap üretir
+```
 
-⸻
+- **Planner** (`core/planner/`): `TOOL_SCHEMA` içindeki araç listesine göre LLM'den `{"tool": ..., "input": ...}` biçiminde JSON ister; cevap JSON değilse normal sohbete düşer.
+- **Araçlar** (`tools/`): her araç `BaseTool`'dan türer ve `tool_registry.py`'ye kaydedilir. Şu an tek araç `terminal`.
+- **Hafıza** (`core/memory/`): her mesaj sentence-transformers ile vektöre çevrilir, ChromaDB'ye (`database/`) yazılır; yeni bir mesajda en yakın 3 kayıt bağlama eklenir.
+- **LLM** (`core/llm/`): Ollama istemcisi; varsayılan model `qwen2.5:7b`.
 
-📦 Kurulum
+## Kurulum
 
-1. Repoyu klonla
+```bash
+git clone https://github.com/MuhammedYasarGunes/Nova.git
+cd Nova
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-git clone <repo-url>
-cd hermes-core
-
-⸻
-
-2. Sanal ortam oluştur
-
-uv venv
-source .venv/bin/activate
-
-⸻
-
-3. Gerekli paketler
-
-uv pip install ollama chromadb sentence-transformers rich pydantic
-
-⸻
-
-4. Ollama kurulumu
-
+# Ollama (macOS)
 brew install ollama
-ollama serve
+ollama serve            # ayrı bir terminalde
 ollama pull qwen2.5:7b
+```
 
-⸻
+## Çalıştırma
 
-▶️ Çalıştırma
-
+```bash
 python3 main.py
+```
 
-⸻
-
-💬 Kullanım
-
-Örnek 1 — Terminal Tool
-
+```text
 Sen > hangi klasördeyim
-Agent > /Users/...
-
-Örnek 2 — Hafıza sorgusu
+Çalıştırılacak komut: pwd
+Onaylıyor musun? [e/H] e
+Agent > Şu an /Users/... klasöründesin.
 
 Sen > ben ne çalışıyordum?
-Agent > ...
+Agent > (hafızadaki önceki konuşmalara göre cevap)
+```
 
-⸻
+Çıkmak için `exit` yaz.
 
-📁 Proje Yapısı
+## Proje yapısı
 
-hermes-core/
-│
-├── core/
-│   ├── agent/
-│   ├── llm/
-│   ├── planner/
-│   └── memory/
-│
-├── tools/
-│   ├── terminal/
-│   ├── router.py
-│
-├── database/
-├── main.py
-└── README.md
+```text
+core/
+  agent/       Agent: hafıza → planner → araç → cevap akışı
+  llm/         Ollama istemcisi
+  memory/      embedding, ChromaDB vektör deposu, hafıza yöneticisi
+  planner/     LLM tabanlı araç seçimi ve araç şeması
+tools/
+  base_tool.py      araçların ortak arayüzü
+  tool_registry.py  kayıtlı araçlar
+  terminal/         terminal komutu çalıştıran araç
+main.py        sohbet döngüsü
+```
 
-⸻
+## Güvenlik notu
 
-⚠️ Notlar
+Terminal aracı LLM'in seçtiği komutu kabukta çalıştırır. Bu yüzden her komut çalıştırılmadan önce ekranda gösterilir ve onayın istenir. Varsayılan cevap "hayır"dır. Yine de yalnızca kendi bilgisayarında, güvendiğin bir ortamda kullan.
 
-* Bu proje deneysel bir AI agent sistemidir
-* Üretim (production) için optimize değildir
-* Hafıza sistemi zamanla büyür (ileride temizleme gerekir)
-* LLM promptları modele göre ayarlanabilir
+## Yol haritası
 
-⸻
+- Çok adımlı planlama (ReAct döngüsü)
+- Dosya sistemi ve web otomasyonu araçları
+- Sesli asistan (Whisper + TTS)
+- Hafızayı zamanla özetleme ve temizleme
 
-🔮 Gelecek Geliştirmeler
+## Geliştiren
 
-* Çok adımlı planlama (ReAct loop)
-* Dosya sistemi araçları
-* Web otomasyonu (Playwright)
-* Sesli asistan (Whisper + TTS)
-* Multi-agent mimarisi
-* Görev zamanlama sistemi
-
-⸻
-
-🧠 Felsefe
-
-Bu proje şu prensibe dayanır:
-
-“LLM tek başına karar vermez, araç kullanır ve kontrollü bir sistem içinde çalışır.”
-
-⸻
-
-📌 Amaç
-
-Bu sistemin amacı:
-
-* yerel çalışan AI agent altyapısı kurmak
-* araç kullanan gerçek bir “dijital asistan” geliştirmek
-* zamanla otonom sistemlere evrilmek
-
-⸻
+[Muhammed Yaşar Güneş](https://github.com/MuhammedYasarGunes)
